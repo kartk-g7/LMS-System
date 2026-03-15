@@ -3,6 +3,17 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 
+// Validate Environment Variables gracefully
+const requiredEnvVars = ['MONGO_URI', 'JWT_SECRET'];
+requiredEnvVars.forEach(envVar => {
+  if (!process.env[envVar]) {
+    console.warn(`⚠️ WARNING: ${envVar} environment variable is missing.`);
+  }
+});
+if (!process.env.YOUTUBE_KEY || process.env.YOUTUBE_KEY === 'YOUR_YOUTUBE_API_KEY') {
+  console.warn(`⚠️ WARNING: YOUTUBE_KEY environment variable is missing or invalid. YouTube imports may fail.`);
+}
+
 // Routes
 const authRoutes = require('./routes/authRoutes');
 const courseRoutes = require('./routes/courseRoutes');
@@ -15,8 +26,20 @@ connectDB();
 const app = express();
 
 // Middleware
+const allowedOrigins = process.env.CLIENT_URL 
+  ? process.env.CLIENT_URL.split(',').map(url => url.trim()) 
+  : ['http://localhost:5173'];
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+    return callback(new Error(msg), false);
+  },
   credentials: true,
 }));
 app.use(express.json());
