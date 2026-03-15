@@ -26,8 +26,8 @@ connectDB();
 const app = express();
 
 // Middleware
-const allowedOrigins = process.env.CLIENT_URL 
-  ? process.env.CLIENT_URL.split(',').map(url => url.trim()) 
+const allowedOrigins = process.env.CLIENT_URL
+  ? process.env.CLIENT_URL.split(',').map(url => url.trim())
   : ['http://localhost:5173'];
 
 app.use(cors({
@@ -67,18 +67,17 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: err.message || 'Internal Server Error' });
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
-app.listen(PORT)
+app.listen(PORT, '0.0.0.0')
   .on('listening', () => {
     console.log(`Server running on port ${PORT}`);
-    console.log(`🚀 LMS Server running on http://localhost:${PORT}`);
+    console.log(`🚀 LMS Server running`);
     console.log(`📚 Environment: ${process.env.NODE_ENV || 'development'}`);
   })
   .on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
-      console.error(`❌ Port ${PORT} is already in use. Try another port.`);
-      console.error(`   Tip: change PORT in /server/.env and restart the server.`);
+      console.error(`❌ Port ${PORT} is already in use.`);
     } else {
       console.error('❌ Server error:', err.message);
     }
