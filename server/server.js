@@ -26,21 +26,13 @@ connectDB();
 const app = express();
 
 // Middleware
-const allowedOrigins = process.env.CLIENT_URL
-  ? process.env.CLIENT_URL.split(',').map(url => url.trim())
-  : ['http://localhost:5173'];
-
 app.use(cors({
-  origin: (origin, callback) => {
-    // allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-    return callback(new Error(msg), false);
-  },
-  credentials: true,
+  origin: [
+    "http://localhost:5173",
+    "https://lms-system-chi-nine.vercel.app"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -50,6 +42,11 @@ app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/lessons', lessonRoutes);
 app.use('/api/progress', progressRoutes);
+
+// Root test route
+app.get("/", (req, res) => {
+  res.send("LMS Backend Running");
+});
 
 // Health check
 app.get('/api/health', (req, res) => {
