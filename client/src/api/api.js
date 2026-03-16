@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://api.render.com/deploy/srv-d6rg897gi27c73aj0qsg?key=TY82YtuGskg/api',
+  baseURL: import.meta.env.VITE_API_URL || 'https://lms-system-ua65.onrender.com//api',
   headers: {
     'Content-Type': 'application/json',
   },
