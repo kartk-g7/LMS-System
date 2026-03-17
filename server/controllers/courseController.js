@@ -134,18 +134,34 @@ const enrollCourse = async (req, res) => {
     if (!course) return res.status(404).json({ message: 'Course not found' });
 
     const user = await User.findById(req.user._id);
-    if (user.enrolledCourses.includes(req.params.id)) {
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // enrolledCourses contains ObjectIds — must convert to string for comparison
+    const alreadyEnrolled = (user.enrolledCourses || []).some(
+      (id) => id.toString() === req.params.id
+    );
+    if (alreadyEnrolled) {
       return res.status(400).json({ message: 'Already enrolled in this course' });
     }
 
-    user.enrolledCourses.push(req.params.id);
-    await user.save();
+    // Use $addToSet to atomically add and prevent duplicates;
+    // avoids triggering the bcrypt pre-save hook that runs on user.save()
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
+      { $addToSet: { enrolledCourses: req.params.id } },
+      { new: true, select: 'enrolledCourses' }
+    );
 
     course.enrolledCount += 1;
     await course.save();
 
-    res.json({ success: true, message: 'Enrolled successfully', enrolledCourses: user.enrolledCourses });
+    res.json({
+      success: true,
+      message: 'Enrolled successfully',
+      enrolledCourses: updatedUser.enrolledCourses,
+    });
   } catch (error) {
+    console.error('enrollCourse error:', error.message);
     res.status(500).json({ message: error.message });
   }
 };
