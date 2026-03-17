@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getCourse, getLessons, enrollCourse } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import ProgressBar from '../components/ProgressBar';
+import VideoPlayer from '../components/VideoPlayer';
 
 const CourseDetails = () => {
   const { id } = useParams();
@@ -10,9 +11,17 @@ const CourseDetails = () => {
   const navigate = useNavigate();
   const [course, setCourse] = useState(null);
   const [lessons, setLessons] = useState([]);
+  const [currentVideo, setCurrentVideo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
   const [enrolled, setEnrolled] = useState(false);
+
+  // Auto-select first lesson as preview video when lessons load
+  useEffect(() => {
+    if (lessons.length > 0 && !currentVideo) {
+      setCurrentVideo(lessons[0].youtubeId);
+    }
+  }, [lessons]);
 
   useEffect(() => {
     const fetch = async () => {
@@ -145,47 +154,74 @@ const CourseDetails = () => {
       <div className="page-container">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
-            {/* Embedded YouTube Player */}
-            {course.youtubeVideoId && (
-              <div className="card w-full aspect-video rounded-xl overflow-hidden shadow-lg border border-white/5">
-                <iframe
-                  className="w-full h-full"
-                  src={`https://www.youtube.com/embed/${course.youtubeVideoId}`}
-                  title={course.title}
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                ></iframe>
+            {/* Dynamic Video Preview — driven by lesson selection */}
+            {lessons.length > 0 && (
+              <div className="rounded-2xl overflow-hidden shadow-2xl border border-white/5">
+                <VideoPlayer
+                  youtubeId={currentVideo}
+                  title={lessons.find(l => l.youtubeId === currentVideo)?.title || course.title}
+                />
               </div>
             )}
 
-            {/* Lessons */}
+            {/* Interactive Lesson List */}
             <div className="card p-6">
               <h2 className="text-xl font-display font-bold text-white mb-5">Course Content</h2>
-              <div className="space-y-2">
-                {lessons.map((lesson, index) => (
-                  <div
-                    key={lesson._id}
-                    className="flex items-center gap-4 p-4 rounded-xl bg-dark-600/50 hover:bg-dark-600 transition-all border border-white/5"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-dark-500 flex items-center justify-center text-sm font-bold text-gray-400 flex-shrink-0">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white text-sm font-medium truncate">{lesson.title}</p>
-                      {lesson.isFree && (
-                        <span className="text-xs text-emerald-400">Preview available</span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-500">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              {lessons.length === 0 ? (
+                <p className="text-gray-500 text-sm">No lessons available yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  {lessons.map((lesson, index) => {
+                    const isActive = currentVideo === lesson.youtubeId;
+                    return (
+                      <button
+                        key={lesson._id}
+                        onClick={() => setCurrentVideo(lesson.youtubeId)}
+                        className={`w-full flex items-center gap-4 p-4 rounded-xl transition-all border text-left group ${
+                          isActive
+                            ? 'bg-primary-600/20 border-primary-500/40'
+                            : 'bg-dark-600/50 hover:bg-dark-600 border-white/5'
+                        }`}
+                      >
+                        {/* Number / play indicator */}
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0 transition-all ${
+                          isActive
+                            ? 'bg-primary-600 text-white'
+                            : 'bg-dark-500 text-gray-400 group-hover:bg-dark-400'
+                        }`}>
+                          {isActive ? (
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M8 5v14l11-7z" />
+                            </svg>
+                          ) : (
+                            index + 1
+                          )}
+                        </div>
+
+                        {/* Title + meta */}
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-medium truncate ${isActive ? 'text-white' : 'text-gray-300'}`}>
+                            {lesson.title}
+                          </p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {lesson.isFree && (
+                              <span className="text-xs text-emerald-400 font-medium">Free preview</span>
+                            )}
+                            {lesson.duration && lesson.duration !== '0:00' && (
+                              <span className="text-xs text-gray-500">{lesson.duration}</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Active pulse */}
+                        {isActive && (
+                          <div className="flex-shrink-0 w-2 h-2 rounded-full bg-primary-400 animate-pulse" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
