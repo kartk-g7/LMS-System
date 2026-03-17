@@ -1,7 +1,10 @@
 import axios from 'axios';
 
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://lms-system-ua65.onrender.com/api';
+
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://lms-system-ua65.onrender.com//api',
+  baseURL: BASE_URL,
+  timeout: 30000, // 30s — accounts for Render free-tier cold-start (~15-20s)
   headers: {
     'Content-Type': 'application/json',
   },

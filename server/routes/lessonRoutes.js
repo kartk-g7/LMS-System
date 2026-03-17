@@ -9,8 +9,8 @@ const {
 } = require('../controllers/lessonController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
+router.get('/single/:id', getLesson);   // ← must be before /:courseId (specific before wildcard)
 router.get('/:courseId', getLessons);
-router.get('/single/:id', getLesson);
 router.post('/', protect, authorize('instructor', 'admin'), createLesson);
 router.put('/:id', protect, authorize('instructor', 'admin'), updateLesson);
 router.delete('/:id', protect, authorize('instructor', 'admin'), deleteLesson);

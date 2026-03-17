@@ -13,6 +13,7 @@ const CourseDetails = () => {
   const [lessons, setLessons] = useState([]);
   const [currentVideo, setCurrentVideo] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [enrolling, setEnrolling] = useState(false);
   const [enrolled, setEnrolled] = useState(false);
 
@@ -24,19 +25,28 @@ const CourseDetails = () => {
   }, [lessons]);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchData = async () => {
       try {
+        setError(null);
         const [courseRes, lessonsRes] = await Promise.all([getCourse(id), getLessons(id)]);
         setCourse(courseRes.data.course);
         setLessons(lessonsRes.data.lessons || []);
         setEnrolled(user?.enrolledCourses?.includes(id));
       } catch (err) {
-        console.error(err);
+        console.error('CourseDetails fetch error:', err);
+        const status = err.response?.status;
+        if (status === 404) {
+          setError('course-not-found');
+        } else if (err.code === 'ECONNABORTED' || !err.response) {
+          setError('server-unavailable');
+        } else {
+          setError('generic');
+        }
       } finally {
         setLoading(false);
       }
     };
-    fetch();
+    fetchData();
   }, [id, user]);
 
   const handleEnroll = async () => {
@@ -59,6 +69,43 @@ const CourseDetails = () => {
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
           <p className="text-gray-400">Loading course...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    const isNotFound = error === 'course-not-found';
+    const isUnavailable = error === 'server-unavailable';
+    return (
+      <div className="min-h-screen pt-24 flex items-center justify-center text-center px-4">
+        <div className="max-w-md">
+          <div className="text-6xl mb-4">{isNotFound ? '😕' : isUnavailable ? '⏳' : '⚠️'}</div>
+          <h2 className="text-2xl font-bold text-white mb-3">
+            {isNotFound ? 'Course not found'
+              : isUnavailable ? 'Server is waking up…'
+              : 'Something went wrong'}
+          </h2>
+          <p className="text-gray-400 mb-6 text-sm leading-relaxed">
+            {isNotFound
+              ? 'This course doesn\'t exist or may have been removed.'
+              : isUnavailable
+              ? 'The backend server is starting up (this takes ~15-20 seconds on the free tier). Please wait a moment and try again.'
+              : 'An unexpected error occurred. Please try again.'}
+          </p>
+          <div className="flex items-center justify-center gap-3 flex-wrap">
+            {!isNotFound && (
+              <button
+                onClick={() => window.location.reload()}
+                className="btn-primary"
+              >
+                Try Again
+              </button>
+            )}
+            <Link to="/courses" className="btn-secondary">
+              Back to Courses
+            </Link>
+          </div>
         </div>
       </div>
     );

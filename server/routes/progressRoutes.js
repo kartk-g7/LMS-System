@@ -4,6 +4,7 @@ const { updateProgress, getProgress, getLastWatched, getMyStats } = require('../
 const { protect } = require('../middleware/authMiddleware');
 
 router.post('/update', protect, updateProgress);
+// Specific named routes MUST come before wildcard /:userId
 router.get('/stats/me', protect, getMyStats);
 router.get('/last/:courseId', protect, getLastWatched);
 router.get('/:userId', protect, getProgress);
