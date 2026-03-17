@@ -1,6 +1,10 @@
 import axios from 'axios';
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'https://lms-system-ua65.onrender.com/api';
+// Normalize the base URL — always ensure it ends with /api.
+// If VITE_API_URL is set on Vercel without the /api suffix (e.g. just the domain),
+// this guarantees requests still land on the correct /api/* routes.
+const _raw = import.meta.env.VITE_API_URL || 'https://lms-system-ua65.onrender.com/api';
+const BASE_URL = _raw.endsWith('/api') ? _raw : _raw.replace(/\/$/, '') + '/api';
 
 const API = axios.create({
   baseURL: BASE_URL,
