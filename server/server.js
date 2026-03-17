@@ -26,12 +26,20 @@ connectDB();
 const app = express();
 
 // Middleware
+// Allow localhost in dev + any Vercel deployment for this project.
+// Using a function so ALL Vercel preview/branch URLs are covered automatically
+// without needing to add each new one manually after every deployment.
+const ALLOWED_ORIGIN_REGEX = /^https:\/\/lms-system.*\.vercel\.app$/;
+
 const corsOptions = {
-  origin: [
-    "http://localhost:5173",
-    "https://lms-system-chi-nine.vercel.app",
-    "https://lms-system-kv5zxloty-karthikgowdakokkada11-4078s-projects.vercel.app"
-  ],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (server-to-server, curl, Postman)
+    if (!origin) return callback(null, true);
+    if (origin === 'http://localhost:5173' || ALLOWED_ORIGIN_REGEX.test(origin)) {
+      return callback(null, true);
+    }
+    callback(new Error(`CORS: origin '${origin}' not allowed`));
+  },
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 };
