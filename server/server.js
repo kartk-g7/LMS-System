@@ -26,14 +26,20 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(cors({
+const corsOptions = {
   origin: [
     "http://localhost:5173",
-    "https://lms-system-chi-nine.vercel.app"
+    "https://lms-system-chi-nine.vercel.app",
+    "https://lms-system-kv5zxloty-karthikgowdakokkada11-4078s-projects.vercel.app"
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
-}));
+};
+
+app.use(cors(corsOptions));
+
+// Handle CORS preflight for all routes
+app.options("*", cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
