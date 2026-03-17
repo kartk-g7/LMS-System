@@ -20,7 +20,7 @@ const CourseDetails = () => {
   // Auto-select first lesson as preview video when lessons load
   useEffect(() => {
     if (lessons.length > 0 && !currentVideo) {
-      setCurrentVideo(lessons[0].youtubeId);
+      setCurrentVideo(lessons[0].videoId);
     }
   }, [lessons]);
 
@@ -28,9 +28,10 @@ const CourseDetails = () => {
     const fetchData = async () => {
       try {
         setError(null);
-        const [courseRes, lessonsRes] = await Promise.all([getCourse(id), getLessons(id)]);
-        setCourse(courseRes.data.course);
-        setLessons(lessonsRes.data.lessons || []);
+        const courseRes = await getCourse(id);
+        const courseData = courseRes.data.course;
+        setCourse(courseData);
+        setLessons(courseData.lessons || []);
         setEnrolled(user?.enrolledCourses?.includes(id));
       } catch (err) {
         console.error('CourseDetails fetch error:', err);
@@ -211,7 +212,7 @@ const CourseDetails = () => {
               <div className="rounded-2xl overflow-hidden shadow-2xl border border-white/5">
                 <VideoPlayer
                   youtubeId={currentVideo}
-                  title={lessons.find(l => l.youtubeId === currentVideo)?.title || course.title}
+                  title={lessons.find(l => l.videoId === currentVideo)?.title || course.title}
                 />
               </div>
             )}
@@ -224,11 +225,11 @@ const CourseDetails = () => {
               ) : (
                 <div className="space-y-2">
                   {lessons.map((lesson, index) => {
-                    const isActive = currentVideo === lesson.youtubeId;
+                    const isActive = currentVideo === lesson.videoId;
                     return (
                       <button
                         key={lesson._id}
-                        onClick={() => setCurrentVideo(lesson.youtubeId)}
+                        onClick={() => setCurrentVideo(lesson.videoId)}
                         className={`w-full flex items-center gap-4 p-4 rounded-xl transition-all border text-left group ${
                           isActive
                             ? 'bg-primary-600/20 border-primary-500/40'

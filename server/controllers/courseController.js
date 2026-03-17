@@ -70,7 +70,7 @@ const getCourse = async (req, res) => {
 // @access Private (instructor/admin)
 const createCourse = async (req, res) => {
   try {
-    const { title, description, thumbnail, category, level, tags } = req.body;
+    const { title, description, thumbnail, category, level, tags, lessons } = req.body;
     const course = await Course.create({
       title,
       description,
@@ -78,6 +78,8 @@ const createCourse = async (req, res) => {
       category,
       level,
       tags,
+      lessons: lessons || [],
+      totalLessons: (lessons || []).length,
       instructor: req.user._id,
       instructorName: req.user.name,
     });
@@ -97,6 +99,10 @@ const updateCourse = async (req, res) => {
 
     if (course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized to update this course' });
+    }
+
+    if (req.body.lessons) {
+      req.body.totalLessons = req.body.lessons.length;
     }
 
     course = await Course.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });

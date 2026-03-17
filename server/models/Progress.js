@@ -14,7 +14,7 @@ const progressSchema = new mongoose.Schema(
     },
     lessonId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Lesson',
+      // References an _id inside Course.lessons subdocument array
       required: true,
     },
     status: {

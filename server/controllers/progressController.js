@@ -1,5 +1,5 @@
 const Progress = require('../models/Progress');
-const Lesson = require('../models/Lesson');
+const Course = require('../models/Course'); // changed from Lesson
 
 // @desc  Update progress (mark lesson as completed)
 // @route POST /api/progress/update
@@ -31,24 +31,43 @@ const getProgress = async (req, res) => {
     let filter = { userId: req.params.userId };
     if (courseId) filter.courseId = courseId;
 
-    const progressRecords = await Progress.find(filter).populate('lessonId', 'title order');
+    const progressRecords = await Progress.find(filter);
+
+    // Manual populate for lesson details from Course.lessons array
+    const populatedRecords = await Promise.all(progressRecords.map(async (record) => {
+      const course = await Course.findById(record.courseId);
+      if (!course) return { ...record.toObject(), lessonId: { title: 'Unknown', order: 1 } };
+
+      const lesson = course.lessons.id(record.lessonId);
+      const order = course.lessons.findIndex(l => l._id.toString() === record.lessonId.toString()) + 1;
+
+      return {
+        ...record.toObject(),
+        lessonId: {
+          _id: record.lessonId,
+          title: lesson ? lesson.title : "Lesson",
+          order: order || 1
+        }
+      };
+    }));
 
     // Calculate percentage per course if courseId is given
     if (courseId) {
-      const totalLessons = await Lesson.countDocuments({ courseId });
+      const course = await Course.findById(courseId);
+      const totalLessons = course ? course.totalLessons : 0;
       const completedLessons = progressRecords.filter((p) => p.status === 'completed').length;
       const percentage = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
 
       return res.json({
         success: true,
-        progressRecords,
+        progressRecords: populatedRecords,
         completedLessons,
         totalLessons,
         percentage,
       });
     }
 
-    res.json({ success: true, progressRecords });
+    res.json({ success: true, progressRecords: populatedRecords });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -62,11 +81,28 @@ const getLastWatched = async (req, res) => {
     const lastProgress = await Progress.findOne({
       userId: req.user._id,
       courseId: req.params.courseId,
-    })
-      .sort({ lastWatchedAt: -1 })
-      .populate('lessonId');
+    }).sort({ lastWatchedAt: -1 });
 
-    res.json({ success: true, lastProgress });
+    if (!lastProgress) return res.json({ success: true, lastProgress: null });
+
+    const course = await Course.findById(req.params.courseId);
+    let lessonInfo = { _id: lastProgress.lessonId, title: "Lesson", order: 1 };
+
+    if (course) {
+      const lesson = course.lessons.id(lastProgress.lessonId);
+      const order = course.lessons.findIndex(l => l._id.toString() === lastProgress.lessonId.toString()) + 1;
+      if (lesson) {
+        lessonInfo = { _id: lastProgress.lessonId, title: lesson.title, order: order || 1 };
+      }
+    }
+
+    res.json({
+      success: true,
+      lastProgress: {
+        ...lastProgress.toObject(),
+        lessonId: lessonInfo
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

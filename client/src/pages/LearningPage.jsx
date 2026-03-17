@@ -26,12 +26,9 @@ const LearningPage = () => {
     }
     const init = async () => {
       try {
-        const [courseRes, lessonsRes] = await Promise.all([
-          getCourse(courseId),
-          getLessons(courseId),
-        ]);
+        const courseRes = await getCourse(courseId);
         const fetchedCourse = courseRes.data.course;
-        const fetchedLessons = lessonsRes.data.lessons || [];
+        const fetchedLessons = fetchedCourse.lessons || [];
         setCourse(fetchedCourse);
         setLessons(fetchedLessons);
 
@@ -154,7 +151,7 @@ const LearningPage = () => {
         <div className="flex-1 overflow-y-auto">
           <div className="p-4 lg:p-6 max-w-5xl mx-auto space-y-5">
             {/* Video */}
-            <VideoPlayer youtubeId={currentLesson?.youtubeId} title={currentLesson?.title} />
+            <VideoPlayer youtubeId={currentLesson?.videoId} title={currentLesson?.title} />
 
             {/* Progress + Actions */}
             <div className="card p-5 space-y-4">

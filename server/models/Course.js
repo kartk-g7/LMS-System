@@ -54,10 +54,12 @@ const courseSchema = new mongoose.Schema(
       default: true,
     },
     tags: [String],
-    youtubeVideoId: {
-      type: String,
-      default: '',
-    },
+    lessons: [
+      {
+        title: { type: String, required: true },
+        videoId: { type: String, required: true },
+      }
+    ],
   },
   { timestamps: true }
 );
