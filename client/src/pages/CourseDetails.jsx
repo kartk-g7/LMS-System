@@ -57,7 +57,12 @@ const CourseDetails = () => {
       setEnrolled(true);
       updateUserEnrollment(id);
     } catch (err) {
-      if (err.response?.status === 400) setEnrolled(true);
+      if (err.response?.status === 400) {
+        // 400 = already enrolled in DB — sync local state so the
+        // button switches to "Continue Learning" and persists on reload
+        setEnrolled(true);
+        updateUserEnrollment(id);
+      }
     } finally {
       setEnrolling(false);
     }
